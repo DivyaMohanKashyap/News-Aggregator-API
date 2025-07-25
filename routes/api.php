@@ -1,0 +1,23 @@
+<?php
+
+use App\Http\Controllers\Api\AuthController;
+use Illuminate\Support\Facades\Route;
+
+Route::prefix('v1')->group(function () {
+    // Test the API
+    Route::get('test', function () {
+        return response()->json(['message' => 'API is working']);
+    })->name('api.test');
+
+    // Public routes
+    Route::post('login', [AuthController::class, 'login'])->name('api.login');
+    Route::post('register', [AuthController::class, 'register'])->name('api.register');
+    Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->name('api.forgot-password');
+
+    // authenticated routes
+    Route::middleware('auth:sanctum')->group(function () {
+        // Logout the current user session(s)
+        Route::post('logout', [AuthController::class, 'logout'])->name('api.logout');
+        Route::post('logout-all-devices', [AuthController::class, 'logoutAllDevices'])->name('api.logout-all-devices');
+    });
+});
