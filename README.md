@@ -1,61 +1,109 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+# Laravel + Docker Project Setup Documentation
 
-## About Laravel
+This guide helps you run the Laravel project with Docker and Docker Compose efficiently.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Prerequisites
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+* [Docker](https://www.docker.com/products/docker-desktop/) installed
+* [Docker Compose](https://docs.docker.com/compose/install/) installed
+* .env file set up (see .env.example)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+# Project Structure (Simplified)
 
-## Learning Laravel
+## Project Structure
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+```bash
+├── app/
+│   ├── Console/
+|   ├── DTO/
+│   ├── Exceptions/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │       └── Api/
+│   │   ├── Middleware/
+│   │   └── Requests/
+│   ├── Jobs/
+│   ├── Models/
+│   ├── Providers/
+├── ├── Repositories/
+│   └── Article/
+│   └── Services/
+├── config/
+├── database/
+│   ├── factories/
+│   ├── migrations/
+│   └── seeders/
+├── docker/
+│   ├── nginx/
+│   ├── php/
+│   └── mysql/
+├── resources/
+│   ├── js/
+│   ├── sass/
+│   └── views/
+├── routes/
+│   ├── api.php
+│   ├── web.php
+│   └── console.php
+├── tests/
+│   ├── Feature/
+│   └── Unit/
+├── 
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 1. Build and Start the Containers
 
-## Laravel Sponsors
+Install my-project with npm
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+docker compose up -d --build
+```
+This will:
+* Build the PHP, Nginx, MySQL, and Redis containers
+* It will migrate and seed the database
+* Start the application at http://localhost:8000
+## 2. Run Laravel Setup Commands
 
-### Premium Partners
+Run this once after the containers are up:
+```bash
+docker compose exec app php artisan key:generate
+docker compose exec app php artisan migrate --seed
+docker compose exec app php artisan storage:link
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
 
-## Contributing
+## 3. Database Access
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+Host: 127.0.0.1
+Port: 3306
+Username: root
+Password: (check your .env or docker-compose)
+Database: news_aggregator_api
+```
 
-## Code of Conduct
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 4. Running Scheduled Jobs (cron)
 
-## Security Vulnerabilities
+To run Laravel’s scheduled tasks:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+docker compose exec app php artisan schedule:run
+```
 
-## License
+## 5. Clear Cache (When Needed)
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+What optimizations did you make in your code? E.g. refactors, performance improvements, accessibility
+
+```bash
+docker compose exec app php artisan config:clear
+docker compose exec app php artisan cache:clear
+```
+
+## Running Tests
+
+```bash
+docker compose exec app php artisan test
+```
