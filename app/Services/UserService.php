@@ -22,7 +22,7 @@ class UserService
                 "status" => true,
                 "message" => "User registered successfully",
                 "token" => $user->createToken("api")->plainTextToken
-            ], 200);
+            ], 201);
         } catch (Exception $e) {
             logger($e);
             return response()->json([
@@ -42,7 +42,7 @@ class UserService
         $user->name = $userDTO->name;
         $user->email = $userDTO->email;
         if ($userDTO->password) {
-            $user->password = bcrypt($userDTO->password);
+            $user->password = $userDTO->password ? Hash::make($userDTO->password) : $user->password;
         }
         $user->save();
 

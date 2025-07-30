@@ -1,0 +1,51 @@
+<?php
+
+namespace Tests\Feature\Job;
+
+use App\Jobs\FetchArticlesJob;
+use App\Services\NewsFetcherService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Http;
+use Tests\TestCase;
+
+class FetchArticlesJobTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_it_dispatches_job()
+    {
+        $job = new FetchArticlesJob();
+        $job->handle();
+        // Assert that the job was handled successfully
+        $this->assertTrue(true);
+    }
+
+    public function test_it_fetches_articles_from_news_api()
+    {
+        // Fake NewsAPI HTTP response
+        Http::fake([
+            'newsapi.org/*' => Http::response([
+                'articles' => [
+                    [
+                        'title' => 'Test Article',
+                        'slug' => 'test-article',
+                        'content' => 'Some content',
+                        'author' => 'Test Author',
+                        'source' => ['name' => 'News API'],
+                        'url' => 'https://example.com/article',
+                        'publishedAt' => now()->toIso8601String(),
+                    ]
+                ]
+            ], 200),
+        ]);
+
+        // Dispatch job
+        dispatch(new FetchArticlesJob());
+
+        $this->assertDatabaseHas('articles', [
+            'title' => 'Test Article',
+            'url'   => 'https://example.com/article',
+        ]);
+    }
+}

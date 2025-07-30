@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\PreferenceController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -25,5 +27,16 @@ Route::prefix('v1')->group(function () {
         // Logout the current user session(s)
         Route::post('logout', [AuthController::class, 'logout'])->name('api.logout');
         Route::post('logout-all-devices', [AuthController::class, 'logoutAllDevices'])->name('api.logout-all-devices');
+
+        // Article routes
+        Route::get('articles', [ArticleController::class, 'index']);
+        Route::post('articles', [ArticleController::class, 'store']);
+        Route::get('articles/{id}', [ArticleController::class, 'show']);
+        Route::get('articles/search', [ArticleController::class, 'search']);
+
+        // Preference routes
+        Route::get('preferences', [PreferenceController::class, 'getPreferences']);
+        Route::post('preferences', [PreferenceController::class, 'setPreferences']);
+        Route::get('user/feed', [ArticleController::class, 'personalizedFeed']);
     });
 });
