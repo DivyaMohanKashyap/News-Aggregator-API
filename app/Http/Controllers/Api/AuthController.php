@@ -114,18 +114,10 @@ class AuthController extends Controller
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Invalid credentials",
+     *         description="Unauthenticated",
      *         @OA\JsonContent(
      *             @OA\Property(property="status", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Invalid credentials")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthorized - invalid credentials",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Invalid email or password.")
+     *             @OA\Property(property="message", type="string", example="Unauthenticated")
      *         )
      *     ),
      *     @OA\Response(
@@ -172,7 +164,6 @@ class AuthController extends Controller
      *      tags={"Auth"},
      *      summary="Logout from current device",
      *      security={{"sanctum":{}}},
-     *      operationId="logoutUser",
      *      @OA\Response(
      *         response=200,
      *         description="Logout successful",

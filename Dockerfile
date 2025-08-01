@@ -14,13 +14,5 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www
-RUN addgroup -g 82 www-data && adduser -u 82 -D -H -G www-data www-data
-RUN mkdir -p /var/www/html/storage/framework/cache/data \
-    && chmod -R 775 /var/www/html/storage \
-    && chown -R www-data:www-data /var/www/html/storage
-
-
 EXPOSE 9000
 CMD ["php-fpm"]

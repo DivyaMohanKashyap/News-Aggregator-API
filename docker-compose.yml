@@ -17,6 +17,7 @@ services:
       - newsnet
     command: >
         sh -c "php artisan migrate:fresh --seed && php-fpm"
+        sh -c "chmod -R 775 /var/www/storage && chown -R www-data:www-data /var/www/storage"
 
   webserver:
     image: nginx:alpine

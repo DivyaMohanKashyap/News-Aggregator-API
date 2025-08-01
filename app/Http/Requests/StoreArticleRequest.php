@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Article;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
@@ -75,6 +76,7 @@ class StoreArticleRequest extends FormRequest
             content: $this->input('content') ?? null,
             author: $this->input('author') ?? null,
             source: $this->input('source') ?? null,
+            import_source: $this->input('import_source') ?? Article::SOURCE_DEFAULT,
             published_at: $this->input('published_at')
         );
     }

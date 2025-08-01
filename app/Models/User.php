@@ -39,4 +39,12 @@ class User extends Authenticatable
             "password" => "hashed",
         ];
     }
+
+    /**
+     * Get the preferences associated with the user.
+     */
+    public function preferences()
+    {
+        return $this->hasMany(Preference::class);
+    }
 }

@@ -11,6 +11,7 @@ class ArticleDTO
         public ?string $content = null,
         public string $author,
         public string $source,
+        public ?string $import_source,
         public string $url,
         public ?string $published_at
     ) {}

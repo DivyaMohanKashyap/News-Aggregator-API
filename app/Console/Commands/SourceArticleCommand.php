@@ -33,11 +33,12 @@ class SourceArticleCommand extends Command
         $this->info("Fetching articles...");
 
         try {
-            if (FetchArticlesJob::dispatch()) {
-                $this->info("Articles fetched successfully.");
-            } else {
-                throw new \Exception("Failed to dispatch the FetchArticlesJob.");
+            // Dispatch jobs for each source
+            foreach (Article::newsSources() as $source) {
+                FetchArticlesJob::dispatch($source);
             }
+
+            $this->info("Articles fetched successfully.");
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage(), 0, $e);
         }

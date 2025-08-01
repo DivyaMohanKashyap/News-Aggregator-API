@@ -18,6 +18,7 @@ return new class extends Migration
             $table->longText('content')->nullable();
             $table->string('author')->default('Unknown');
             $table->string('source')->nullable();
+            $table->string('news_source')->nullable();
             $table->string('url')->nullable();
             $table->timestamp('published_at')->nullable();
             // Add any additional fields as necessary

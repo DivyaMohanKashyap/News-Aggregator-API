@@ -65,7 +65,7 @@ class ArticleController extends Controller
      *         description="A list of articles",
      *         @OA\JsonContent(
      *             type="array",
-     *             @OA\Items(ref="#/components/schemas/ArticleResource.php")
+     *             @OA\Items(ref="#/components/schemas/ArticleResource")
      *         )
      *     ),
      *     @OA\Response(
@@ -82,8 +82,9 @@ class ArticleController extends Controller
     {
         $filters = $request->only(['category', 'author', 'date', 'search']);
         $perPage = $request->get('per_page', 10);
+        $page = $request->get('page', 1);
 
-        $articles = $this->articleRepository->all($filters, $perPage);
+        $articles = $this->articleRepository->all($filters, $page, $perPage);
 
         return ArticleResource::collection($articles)
         ->additional([
@@ -102,7 +103,7 @@ class ArticleController extends Controller
      *     description="Creates a new article with the provided data.",
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(ref="#/components/schemas/StoreArticleRequest")
+     *         @OA\JsonContent(ref="#/components/schemas/ArticleResource")
      *     ),
      *     @OA\Response(
      *         response=201,
@@ -131,6 +132,7 @@ class ArticleController extends Controller
                 'content'      => $dto->content,
                 'author'       => $dto->author,
                 'source'       => $dto->source,
+                'import_source' => $dto->import_source ?? Article::SOURCE_DEFAULT,
                 'published_at' => $dto->published_at,
             ]
         );
@@ -150,50 +152,6 @@ class ArticleController extends Controller
                 "data" => new ArticleResource($article)
             ],
             201
-        );
-    }
-
-    /**
-     * Search articles based on various parameters.
-     *
-     * @OA\Get(
-     *     path="/api/v1/articles/search",
-     *     tags={"Articles"},
-     *     summary="Search articles",
-     *     description="Searches for articles based on title, slug, or content.",
-     *     @OA\Parameter(
-     *         name="search",
-     *         in="query",
-     *         description="Search term",
-     *         required=true,
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Search results",
-     *         @OA\JsonContent(
-     *             type="array",
-     *             @OA\Items(ref="#/components/schemas/ArticleResource")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthorized",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Unauthenticated")
-     *         )
-     *     ),
-     * )
-     */
-    public function search(Request $request): JsonResponse
-    {
-        // Logic to search articles based on request parameters
-        return response()->json(
-            [
-                "status" => true,
-                "message" => "Search results",
-            ],
-            200
         );
     }
 
@@ -230,12 +188,72 @@ class ArticleController extends Controller
         $article = $this->articleRepository->getById((int)$id);
 
         if ($article) {
-            return new ArticleResource($article);
+            return ArticleResource::make($article)
+                ->additional([
+                    'status' => true,
+                    'message' => 'Article retrieved successfully',
+                ]);
         }
 
         return response()->json([
             'status' => false,
             'message' => 'Article not found',
         ], 404);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/preferences",
+     *     summary="Save user news preferences",
+     *     description="Stores the user's preferred category and news source for personalized feeds.",
+     *     tags={"Preferences"},
+     *     security={{"sanctum":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"category", "source"},
+     *             @OA\Property(property="category", type="string", example="technology"),
+     *             @OA\Property(property="source", type="string", example="News API")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Preference successfully saved",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="category", type="string", example="technology"),
+     *                 @OA\Property(property="source", type="string", example="News API")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation failed",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="The given data was invalid."),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function personalizedFeed()
+    {
+        $articles = $this->articleRepository->getPersonalizedFeed(auth('sanctum')->id());
+        if (!$articles) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No articles found for personalized feed',
+            ], 404);
+        }
+
+        return response()->json(
+            ['status' => true, 'data' => $articles],
+            200
+        );
     }
 }

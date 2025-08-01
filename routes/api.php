@@ -35,8 +35,8 @@ Route::prefix('v1')->group(function () {
         Route::get('articles/search', [ArticleController::class, 'search']);
 
         // Preference routes
-        Route::get('preferences', [PreferenceController::class, 'getPreferences']);
-        Route::post('preferences', [PreferenceController::class, 'setPreferences']);
+        Route::get('preferences', [PreferenceController::class, 'get']);
+        Route::post('preferences', [PreferenceController::class, 'store']);
         Route::get('user/feed', [ArticleController::class, 'personalizedFeed']);
     });
 });
