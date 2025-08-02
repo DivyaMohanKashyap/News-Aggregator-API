@@ -4,8 +4,10 @@ namespace Tests\Feature\Job;
 
 use App\Jobs\FetchArticlesJob;
 use App\Models\Article;
+use App\Repositories\Article\ArticleRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Mockery;
 use Tests\TestCase;
 
 class FetchArticlesJobTest extends TestCase
@@ -22,7 +24,6 @@ class FetchArticlesJobTest extends TestCase
 
     public function test_it_fetches_articles_from_news_api()
     {
-        // Fake NewsAPI HTTP response
         Http::fake([
             '*' => Http::response([
                 'articles' => [
@@ -32,7 +33,6 @@ class FetchArticlesJobTest extends TestCase
                         'content' => 'Some content',
                         'author' => 'Test Author',
                         'source' => ['name' => Article::SOURCE_NEWS_API],
-                        'import_source' => Article::SOURCE_NEWS_API,
                         'url' => 'https://example.com/article',
                         'publishedAt' => now()->toIso8601String()
                     ]
@@ -40,12 +40,16 @@ class FetchArticlesJobTest extends TestCase
             ], 200),
         ]);
 
-        // Dispatch job
-        $job = new FetchArticlesJob(Article::SOURCE_NEWS_API);
-        $job->handle();
+        $mockRepo = Mockery::mock(ArticleRepository::class);
+        $mockRepo->shouldReceive('saveArticle')->once()->withArgs(static fn($dto) =>
+            $dto->title === 'Test Article'
+            && $dto->url === 'https://example.com/article'
+            && $dto->import_source === Article::SOURCE_NEWS_API
+        );
 
-        $this->assertDatabaseHas('articles', [
-            'title' => 'Test Article'
-        ]);
+
+        $this->app->instance(ArticleRepository::class, $mockRepo);
+
+        FetchArticlesJob::dispatchSync(Article::SOURCE_NEWS_API);
     }
 }
