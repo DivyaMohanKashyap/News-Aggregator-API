@@ -1,46 +1,112 @@
-name: Laravel Docker CI
+name: Laravel CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
+
+env:
+  IMAGE_NAME: ghcr.io/divyamohankashyap/news-api-app
+  IMAGE_TAG: latest
 
 jobs:
-  laravel-tests:
+  build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.TOKEN_GITHUB }}
+
+      - name: Build Docker image
+        run: docker build -t $IMAGE_NAME:$IMAGE_TAG .
+
+      - name: Push Docker image
+        run: docker push $IMAGE_NAME:$IMAGE_TAG
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: secret
+          MYSQL_DATABASE: testing_db
+          MYSQL_USER: root
+          MYSQL_PASSWORD: secret
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping -h 127.0.0.1 --silent" --health-interval=10s --health-timeout=5s --health-retries=3
+
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Log in to GitHub Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.TOKEN_GITHUB }}
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.TOKEN_GITHUB }}
 
-    - name: Pull Laravel App Image
-      run: docker pull ghcr.io/divyamohankashyap/news-api-app:latest
+      - name: Pull Docker image
+        run: docker pull $IMAGE_NAME:$IMAGE_TAG
 
-    - name: Start services using docker-compose
-      run: |
-        cp .env.testing .env
-        docker compose -f docker-compose.yml up -d
+      - name: Copy .env.testing
+        run: |
+          if [ -f .env.testing ]; then
+            cp .env.testing .env
+          else
+            echo ".env.testing is missing" && exit 1
+          fi
 
-    - name: Run PHPUnit tests
-      run: |
-        docker exec news-api-app php artisan config:cache
-        docker exec news-api-app php artisan migrate --force
-        docker exec news-api-app php artisan test --log-junit test-report.xml
+      - name: Install dependencies
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}:/var/www \
+            -w /var/www \
+            $IMAGE_NAME:$IMAGE_TAG \
+            composer install --no-interaction --prefer-dist --optimize-autoloader
 
-    - name: Save test report
-      uses: actions/upload-artifact@v4
-      with:
-        name: test-report
-        path: test-report.xml
+      - name: Run migrations & tests
+        run: |
+          docker run --rm \
+            --network host \
+            -v ${{ github.workspace }}:/var/www \
+            -w /var/www \
+            -e APP_ENV=testing \
+            -e APP_DEBUG=true \
+            -e LOG_CHANNEL=stack \
+            -e DB_CONNECTION=mysql \
+            -e DB_HOST=db \
+            -e DB_PORT=3306 \
+            -e DB_DATABASE=testing_db \
+            -e DB_USERNAME=root \
+            -e DB_PASSWORD=secret \
+            -e CACHE_DRIVER=redis \
+            -e QUEUE_CONNECTION=sync \
+            -e REDIS_HOST=redis \
+            $IMAGE_NAME:$IMAGE_TAG \
+            sh -c "php artisan migrate --force && php artisan test --log-junit test-report.xml"
 
-    - name: Stop services
-      if: always()
-      run: docker compose -f docker-compose.yml down --volumes --remove-orphans
+      - name: Upload Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: test-report.xml
