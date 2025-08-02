@@ -1,5 +1,7 @@
+# News Aggregator API (Laravel + Docker + Swagger)
 
-# Laravel + Docker Project Setup Documentation
+
+## Project Setup Documentation
 
 This guide helps you run the Laravel project with Docker and Docker Compose efficiently.
 
@@ -16,7 +18,7 @@ This guide helps you run the Laravel project with Docker and Docker Compose effi
 ```bash
 ├── app/
 │   ├── Console/
-|   ├── DTO/
+│   ├── DTO/
 │   ├── Exceptions/
 │   ├── Http/
 │   │   ├── Controllers/
@@ -47,9 +49,8 @@ This guide helps you run the Laravel project with Docker and Docker Compose effi
 │   ├── web.php
 │   └── console.php
 ├── tests/
-│   ├── Feature/
-│   └── Unit/
-├── 
+    ├── Feature/
+    └── Unit/
 ```
 
 
