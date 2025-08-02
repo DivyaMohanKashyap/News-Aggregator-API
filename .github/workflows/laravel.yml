@@ -62,14 +62,14 @@ jobs:
           REDIS_PORT=6379
           EOF
 
+      - name: Copy .env.testing to .env
+        run: cp .env.testing .env
+
       - name: Run Docker Compose
         run: |
           docker compose up -d db redis
           docker compose up -d app
           sleep 20 # Give containers time to initialize
-
-      - name: Copy .env.testing to .env
-        run: cp .env.testing .env
 
       - name: Run Artisan Tests
         run: docker exec news-api-app php artisan test --log-junit test-report.xml
