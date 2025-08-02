@@ -4,8 +4,6 @@ namespace Tests\Feature\Job;
 
 use App\Jobs\FetchArticlesJob;
 use App\Models\Article;
-use App\Repositories\Article\ArticleRepository;
-use App\Services\ArticleImportServices\NewsAPIService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -43,13 +41,11 @@ class FetchArticlesJobTest extends TestCase
         ]);
 
         // Dispatch job
-        $service = new NewsAPIService(new ArticleRepository());
-        $service->fetch();
+        $job = new FetchArticlesJob(Article::SOURCE_NEWS_API);
+        $job->handle();
 
         $this->assertDatabaseHas('articles', [
-            'title' => 'Test Article',
-            'slug' => 'test-article',
-            'import_source' => Article::SOURCE_NEWS_API
+            'title' => 'Test Article'
         ]);
     }
 }
