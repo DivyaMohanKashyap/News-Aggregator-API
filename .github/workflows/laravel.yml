@@ -2,9 +2,9 @@ name: Laravel CI with Docker Compose
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "staging" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "staging" ]
 
 jobs:
   build-docker-image:
@@ -18,6 +18,9 @@ jobs:
       - name: Build Docker image from docker-compose
         run: docker compose build
 
+      - name: Tag the app image
+        run: docker tag $(docker images --filter=reference='*/app' --format "{{.Repository}}") news-api-app
+
       - name: Save Docker image to tarball
         run: docker save news-api-app -o news-api-app.tar
 
@@ -28,7 +31,7 @@ jobs:
           path: news-api-app.tar
 
   laravel-tests:
-    name: Run Laravel Tests
+    name: Run Laravel Tests with Coverage
     runs-on: ubuntu-latest
     needs: build-docker-image
 
@@ -36,8 +39,8 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: laravel
+          MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.DB_DATABASE }}
         ports:
           - 3306:3306
         options: >-
@@ -63,13 +66,25 @@ jobs:
       - name: Load Docker image
         run: docker load -i news-api-app.tar
 
-      - name: Start Docker Compose stack
+      - name: Start Docker Compose services
         run: docker compose up -d
 
       - name: Wait for services to be ready
-        run: |
-          echo "Waiting for DB and Redis..."
-          sleep 20
+        run: sleep 20
 
-      - name: Run Laravel Tests
-        run: docker exec news-api-app php artisan test
+      - name: Run Laravel tests with coverage
+        run: |
+          docker exec news-api-app mkdir -p storage/test-results
+          docker exec news-api-app ./vendor/bin/phpunit --coverage-clover storage/test-results/coverage.xml > storage/test-results/results.log
+
+      - name: Upload PHPUnit coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: phpunit-coverage
+          path: storage/test-results/coverage.xml
+
+      - name: Upload PHPUnit logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: phpunit-logs
+          path: storage/test-results/results.log
