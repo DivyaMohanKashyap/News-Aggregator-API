@@ -71,7 +71,10 @@ jobs:
           docker compose up -d app
           sleep 20 # Give containers time to initialize
 
-      - name: Run Artisan Tests
+      - name: Install Composer Dependencies
+        run: docker exec news-api-app composer install --no-interaction --prefer-dist --no-scripts
+
+      - name: Run Laravel Tests
         run: docker exec news-api-app php artisan test --log-junit test-report.xml
 
       - name: Store Test Artifacts
