@@ -26,7 +26,7 @@ class FetchArticlesJobTest extends TestCase
     {
         // Fake NewsAPI HTTP response
         Http::fake([
-            'newsapi.org/*' => Http::response([
+            '*' => Http::response([
                 'articles' => [
                     [
                         'title' => 'Test Article',
@@ -42,7 +42,7 @@ class FetchArticlesJobTest extends TestCase
         ]);
 
         // Dispatch job
-        dispatch(new FetchArticlesJob(Article::SOURCE_NEWS_API));
+        FetchArticlesJob::dispatchSync(Article::SOURCE_NEWS_API);
 
         $this->assertDatabaseHas('articles', [
             'title' => 'Test Article',
