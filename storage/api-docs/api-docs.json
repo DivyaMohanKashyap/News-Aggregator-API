@@ -16,31 +16,32 @@
                 "operationId": "3fe8bf684063a5479fb27f5432db77e2",
                 "parameters": [
                     {
-                        "name": "author",
-                        "in": "query",
-                        "description": "Filter by author ID",
-                        "required": false,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "date",
-                        "in": "query",
-                        "description": "Filter by publication date (YYYY-MM-DD)",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "format": "date"
-                        }
-                    },
-                    {
                         "name": "search",
                         "in": "query",
                         "description": "Search articles by title, slug, or content",
                         "required": false,
                         "schema": {
                             "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number for pagination",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": "1"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of articles per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": "10"
                         }
                     }
                 ],
@@ -52,7 +53,7 @@
                                 "schema": {
                                     "type": "array",
                                     "items": {
-                                        "$ref": "#/components/schemas/ArticleResource"
+                                        "$ref": "#/components/schemas/ArticleResponse"
                                     }
                                 }
                             }
@@ -93,7 +94,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/ArticleResource"
+                                "$ref": "#/components/schemas/ArticleResponse"
                             }
                         }
                     }
@@ -104,7 +105,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ArticleResource"
+                                    "$ref": "#/components/schemas/ArticleResponse"
                                 }
                             }
                         }
@@ -153,11 +154,11 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Article found",
+                        "description": "Article retrieved successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/ArticleResource"
+                                    "$ref": "#/components/schemas/ArticleResponse"
                                 }
                             }
                         }
@@ -178,34 +179,37 @@
                             }
                         }
                     }
+                },
+                "security": {
+                    "bearerAuth": {}
                 }
             }
         },
-        "/api/v1/preferences": {
-            "get": {
+        "/api/v1/user/feed": {
+            "post": {
                 "tags": [
                     "Preferences"
                 ],
-                "summary": "Save user news preferences",
-                "description": "Stores the user's preferred category and news source for personalized feeds.",
-                "operationId": "94ae0966450c96135b23274e389b9ce4",
+                "summary": "Retrieve user news preferences",
+                "description": "Retrieve user preferences for news articles.",
+                "operationId": "846a1ac95bf617a6fc7f72735c687898",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "category",
-                                    "source"
+                                    "user_id",
+                                    "article_id"
                                 ],
                                 "properties": {
-                                    "category": {
-                                        "type": "string",
-                                        "example": "technology"
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 1
                                     },
-                                    "source": {
-                                        "type": "string",
-                                        "example": "News API"
+                                    "article_id": {
+                                        "type": "integer",
+                                        "example": 1
                                     }
                                 },
                                 "type": "object"
@@ -219,26 +223,7 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "category": {
-                                                    "type": "string",
-                                                    "example": "technology"
-                                                },
-                                                "source": {
-                                                    "type": "string",
-                                                    "example": "News API"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
+                                    "$ref": "#/components/schemas/ArticleResponse"
                                 }
                             }
                         }
@@ -324,39 +309,10 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": true
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "User registered successfully."
-                                        },
-                                        "data": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "name": {
-                                                    "type": "string",
-                                                    "example": "John Doe"
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "john@example.com"
-                                                },
-                                                "created_at": {
-                                                    "type": "string",
-                                                    "format": "date-time",
-                                                    "example": "2025-07-29T12:00:00Z"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/AuthResponse"
+                                    }
                                 }
                             }
                         }
@@ -428,7 +384,7 @@
                                     "email": {
                                         "type": "string",
                                         "format": "email",
-                                        "example": "example@email.com"
+                                        "example": "john@example.com"
                                     },
                                     "password": {
                                         "type": "string",
@@ -467,7 +423,7 @@
                         }
                     },
                     "401": {
-                        "description": "Unauthenticated",
+                        "description": "Invalid credentials",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -478,27 +434,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Unauthenticated"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Server error",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "status": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "User login failed: Server error"
+                                            "example": "Invalid credentials"
                                         }
                                     },
                                     "type": "object"
@@ -785,7 +721,7 @@
     },
     "components": {
         "schemas": {
-            "ArticleResource": {
+            "ArticleResponse": {
                 "title": "Article Resource",
                 "description": "Represents an article in the news aggregator system.",
                 "required": [
@@ -801,46 +737,111 @@
                 ],
                 "properties": {
                     "id": {
-                        "description": "Unique identifier for the actor type",
-                        "type": "integer"
+                        "description": "Unique identifier for the article",
+                        "type": "integer",
+                        "default": "0"
                     },
                     "title": {
-                        "description": "Name of the actor type",
-                        "type": "string"
+                        "description": "Title of the article",
+                        "type": "string",
+                        "default": "Test Article"
                     },
                     "slug": {
-                        "description": "Name of the actor type",
-                        "type": "string"
+                        "description": "Slug for the article, used in URLs",
+                        "type": "string",
+                        "default": "test-article"
                     },
                     "content": {
-                        "description": "Name of the actor type",
-                        "type": "string"
+                        "description": "Content of the article",
+                        "type": "string",
+                        "default": "This is a test article content."
                     },
                     "author": {
-                        "description": "Name of the actor type",
-                        "type": "string"
+                        "description": "Author of the article",
+                        "type": "string",
+                        "default": "John Doe"
                     },
                     "source": {
-                        "description": "Name of the actor type",
-                        "type": "string"
+                        "description": "Source of the article, e.g., The Hindu, BBC News, etc.",
+                        "type": "string",
+                        "default": "BBC News"
                     },
                     "news_source": {
-                        "description": "Name of the actor type",
-                        "type": "string"
+                        "description": "Source of the article, e.g., News API, The Guardian, NYTimes",
+                        "type": "string",
+                        "default": "News API"
                     },
                     "url": {
-                        "description": "Name of the actor type",
-                        "type": "string"
+                        "description": "URL of the article",
+                        "type": "string",
+                        "default": "https://example.com/test-article"
                     },
                     "published_at": {
-                        "description": "Name of the actor type",
-                        "type": "string"
+                        "description": "Publication date and time of the article",
+                        "type": "string",
+                        "format": "date-time",
+                        "default": "2023-10-01T12:00:00Z"
                     }
                 },
                 "type": "object",
                 "xml": {
-                    "name": "ArticleResource"
+                    "name": "ArticleResponse"
                 }
+            },
+            "AuthResponse": {
+                "title": "Authentication Response",
+                "description": "Response structure for authentication endpoints.",
+                "properties": {
+                    "status": {
+                        "description": "Class AuthController\nHandles user authentication and registration.",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "User logged in successfully"
+                    },
+                    "token": {
+                        "type": "string",
+                        "example": "1|abcdefghij1234567890"
+                    },
+                    "data": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "John Doe"
+                            },
+                            "email": {
+                                "type": "string",
+                                "example": "john@example.com"
+                            },
+                            "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2025-07-29T12:00:00Z"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            },
+            "sanctum": {
+                "type": "http",
+                "description": "Use the token provided after login to access protected routes.",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
             }
         }
     },
@@ -850,12 +851,12 @@
             "description": "API Endpoints for managing articles"
         },
         {
-            "name": "Preferences",
-            "description": "Preferences"
+            "name": "Auth",
+            "description": "API Endpoints for user authentication and registration"
         },
         {
-            "name": "Auth",
-            "description": "Auth"
+            "name": "Preferences",
+            "description": "Preferences"
         }
     ]
 }

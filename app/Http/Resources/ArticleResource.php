@@ -7,61 +7,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/**
- * @OA\Schema(
- *     schema="ArticleResource",
- *     type="object",
- *     title="Article Resource",
- *     description="Represents an article in the news aggregator system.",
- *     required={"id", "title", "slug", "content", "author", "source", "news_source", "url", "published_at"},
- *     @OA\Xml(name="ArticleResource"),
- *     @OA\Property(
- *         property="id",
- *         type="integer",
- *         description="Unique identifier for the actor type"
- *     ),
- *     @OA\Property(
- *         property="title",
- *         type="string",
- *         description="Name of the actor type"
- *     ),
- *     @OA\Property(
- *         property="slug",
- *         type="string",
- *         description="Name of the actor type"
- *     ),
- *     @OA\Property(
- *         property="content",
- *         type="string",
- *         description="Name of the actor type"
- *     ),
- *     @OA\Property(
- *         property="author",
- *         type="string",
- *         description="Name of the actor type"
- *     ),
- *     @OA\Property(
- *         property="source",
- *         type="string",
- *         description="Name of the actor type"
- *     ),
- *     @OA\Property(
- *         property="news_source",
- *         type="string",
- *         description="Name of the actor type"
- *     ),
- *     @OA\Property(
- *         property="url",
- *         type="string",
- *         description="Name of the actor type"
- *     ),
- *     @OA\Property(
- *         property="published_at",
- *         type="string",
- *         description="Name of the actor type"
- *     )
- * )
- */
 class ArticleResource extends JsonResource
 {
     /**

@@ -37,6 +37,6 @@ Route::prefix('v1')->group(function () {
         // Preference routes
         Route::get('preferences', [PreferenceController::class, 'get']);
         Route::post('preferences', [PreferenceController::class, 'store']);
-        Route::get('user/feed', [ArticleController::class, 'personalizedFeed']);
+        Route::post('user/feed', [ArticleController::class, 'personalizedFeed']);
     });
 });

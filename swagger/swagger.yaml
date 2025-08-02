@@ -4,8 +4,8 @@ info:
   description: REST API for a news aggregator using Laravel.
   version: 1.0.0
 servers:
-  - url: http://localhost:8000/api
-    description: Local Dev Server
+  - url: http://localhost:8000/api/v1
+    description: Local development server
 
 tags:
   - name: Auth
@@ -57,23 +57,41 @@ paths:
       summary: Get all new articles
       parameters:
         - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: per_page
+          schema: { type: integer, default: 10 }
+        - in: query
           name: page
-          schema: { type: integer }
-        - in: query
-          name: keyword
-          schema: { type: string }
-        - in: query
-          name: category
-          schema: { type: string }
-        - in: query
-          name: source
-          schema: { type: string }
-        - in: query
-          name: date
-          schema: { type: string, format: date }
+          schema: { type: integer, default: 1 }
       responses:
         '200':
-          description: Paginated list of news articles
+          description: List of articles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                  links:
+                    type: object
+                    properties:
+                      first:
+                        type: string
+                        description: URL to the current page
+                      last:
+                        type: string
+                        description: URL to the next page, if available
+                      prev:
+                        type: string
+                        description: URL to the previous page, if available
+                      next:
+                        type: string
+                        description: URL to the next page, if available
+        '404':
+          description: Not found
 
   /articles/{id}:
     get:

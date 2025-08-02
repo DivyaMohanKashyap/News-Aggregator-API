@@ -12,6 +12,38 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * Class AuthController
+ * Handles user authentication and registration.
+ * @package App\Http\Controllers\Api
+ *
+ * @OA\Tag(
+ *     name="Auth",
+ *     description="API Endpoints for user authentication and registration"
+ * )
+ * @OA\SecurityScheme(
+ *     securityScheme="sanctum",
+ *     type="http",
+ *     scheme="bearer",
+ *     bearerFormat="JWT",
+ *     description="Use the token provided after login to access protected routes."
+ * )
+ * @OA\Schema(
+ *     schema="AuthResponse",
+ *     type="object",
+ *     title="Authentication Response",
+ *     description="Response structure for authentication endpoints.",
+ *     @OA\Property(property="status", type="boolean", example=true),
+ *     @OA\Property(property="message", type="string", example="User logged in successfully"),
+ *     @OA\Property(property="token", type="string", example="1|abcdefghij1234567890"),
+ *     @OA\Property(property="data", type="object",
+ *         @OA\Property(property="id", type="integer", example=1),
+ *         @OA\Property(property="name", type="string", example="John Doe"),
+ *         @OA\Property(property="email", type="string", example="john@example.com"),
+ *         @OA\Property(property="created_at", type="string", format="date-time", example="2025-07-29T12:00:00Z")
+ *     )
+ * )
+ */
 class AuthController extends Controller
 {
     public function __construct(
@@ -43,14 +75,8 @@ class AuthController extends Controller
      *         response=200,
      *         description="User registered successfully",
      *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="User registered successfully."),
-     *             @OA\Property(property="data", type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="name", type="string", example="John Doe"),
-     *                 @OA\Property(property="email", type="string", example="john@example.com"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2025-07-29T12:00:00Z")
-     *             )
+     *             type="array",
+     *             @OA\Items(ref="#/components/schemas/AuthResponse")
      *         )
      *     ),
      *     @OA\Response(
@@ -99,7 +125,7 @@ class AuthController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             required={"email", "password"},
-     *             @OA\Property(property="email", type="string", format="email", example="example@email.com"),
+     *             @OA\Property(property="email", type="string", format="email", example="john@example.com"),
      *             @OA\Property(property="password", type="string", format="password", example="password123")
      *         )
      *     ),
@@ -114,18 +140,10 @@ class AuthController extends Controller
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Unauthenticated",
+     *         description="Invalid credentials",
      *         @OA\JsonContent(
      *             @OA\Property(property="status", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Unauthenticated")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=500,
-     *         description="Server error",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="status", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="User login failed: Server error")
+     *             @OA\Property(property="message", type="string", example="Invalid credentials")
      *         )
      *     )
      * )
@@ -162,11 +180,11 @@ class AuthController extends Controller
      * @OA\Post(
      *      path="/api/v1/logout",
      *      tags={"Auth"},
-     *      summary="Logout from current device",
+     *      summary="Logout the current user",
      *      security={{"sanctum":{}}},
      *      @OA\Response(
      *         response=200,
-     *         description="Logout successful",
+     *         description="USER was logged out from active session.",
      *         @OA\JsonContent(
      *             @OA\Property(property="status", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Logged out successfully.")
@@ -174,10 +192,10 @@ class AuthController extends Controller
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Unauthenticated",
+     *         description="User could not be authenticated.",
      *         @OA\JsonContent(
      *             @OA\Property(property="status", type="boolean", example=false),
-     *             @OA\Property(property="error", type="string", example="Unauthorized")
+     *             @OA\Property(property="error", type="string", example="User could not be authenticated.")
      *         )
      *     )
      * )
@@ -215,15 +233,15 @@ class AuthController extends Controller
      * @OA\Post(
      *     path="/api/v1/logout-all-devices",
      *     tags={"Auth"},
-     *     summary="Logout from current device",
+     *     summary="Logout from all active sessions",
      *     security={{"sanctum":{}}},
      *     operationId="logoutUser",
      *     @OA\Response(
      *         response=200,
-     *         description="Logout successful",
+     *         description="USER was logged out from all active sessions.",
      *         @OA\JsonContent(
      *             @OA\Property(property="status", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Logged out successfully.")
+     *             @OA\Property(property="message", type="string", example="User was logged out from all active sessions.")
      *         )
      *     ),
      *     @OA\Response(
@@ -231,7 +249,7 @@ class AuthController extends Controller
      *         description="Unauthenticated",
      *         @OA\JsonContent(
      *             @OA\Property(property="status", type="boolean", example=false),
-     *             @OA\Property(property="error", type="string", example="Unauthorized")
+     *             @OA\Property(property="error", type="string", example="No active session found for this user.")
      *         )
      *     )
      * )
@@ -251,18 +269,18 @@ class AuthController extends Controller
                     ],
                     200
                 );
+            } else {
+                return response()->json(
+                    [
+                        "status" => false,
+                        "message" => "No active session found for this user.",
+                    ],
+                    401
+                );
             }
         } catch (Exception $exception) {
             throw new Exception($exception->getMessage(), $exception->getCode(), $exception);
         }
-
-        return response()->json(
-            [
-                "status" => false,
-                "message" => "No active session found for this user.",
-            ],
-            401
-        );
     }
 
     /**
