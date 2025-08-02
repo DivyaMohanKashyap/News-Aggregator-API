@@ -16,8 +16,10 @@ services:
     networks:
       - newsnet
     command: >
-        sh -c "php artisan migrate:fresh --seed && php-fpm"
-        sh -c "chmod -R 775 /var/www/storage && chown -R www-data:www-data /var/www/storage"
+        sh -c "chmod -R 775 /var/www/storage &&
+                chown -R www-data:www-data /var/www/storage &&
+                php artisan migrate:fresh --seed &&
+                php-fpm"
 
   webserver:
     image: nginx:alpine
