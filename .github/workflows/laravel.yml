@@ -18,8 +18,10 @@ jobs:
       - name: Build Docker image from docker-compose
         run: docker compose build
 
-      - name: Tag the app image
-        run: docker tag $(docker images --filter=reference='*/app' --format "{{.Repository}}") news-api-app
+      - name: Tag the built app image
+        run: |
+          IMAGE_ID=$(docker images --format "{{.ID}} {{.Repository}}" | grep news-api-app | awk '{print $1}')
+          docker tag $IMAGE_ID news-api-app:latest
 
       - name: Save Docker image to tarball
         run: docker save news-api-app -o news-api-app.tar
