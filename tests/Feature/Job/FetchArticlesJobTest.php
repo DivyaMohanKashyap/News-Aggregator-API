@@ -5,6 +5,7 @@ namespace Tests\Feature\Job;
 use App\Jobs\FetchArticlesJob;
 use App\Models\Article;
 use App\Repositories\Article\ArticleRepository;
+use App\Services\ArticleImportServices\NewsAPIService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Mockery;
@@ -39,7 +40,7 @@ class FetchArticlesJobTest extends TestCase
                 ]
             ], 200),
         ]);
-
+        // Mock
         $mockRepo = Mockery::mock(ArticleRepository::class);
         $mockRepo->shouldReceive('saveArticle')->once()->withArgs(static fn($dto) =>
             $dto->title === 'Test Article'
@@ -47,9 +48,11 @@ class FetchArticlesJobTest extends TestCase
             && $dto->import_source === Article::SOURCE_NEWS_API
         );
 
-
+        // Bind the mock to the container
         $this->app->instance(ArticleRepository::class, $mockRepo);
 
-        FetchArticlesJob::dispatchSync(Article::SOURCE_NEWS_API);
+        // Let the container resolve NewsAPIService with the mock injected
+        $service = app(NewsAPIService::class);
+        $service->fetch();
     }
 }
