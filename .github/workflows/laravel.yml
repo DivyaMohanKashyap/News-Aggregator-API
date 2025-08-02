@@ -43,8 +43,8 @@ jobs:
 
       - name: Run Docker Compose
         run: |
-          docker-compose up -d db redis
-          docker-compose up -d app
+          docker compose up -d db redis
+          docker compose up -d app
           sleep 20 # Give containers time to initialize
 
       - name: Run Artisan Tests
