@@ -3,6 +3,7 @@
 namespace Tests\Feature\Job;
 
 use App\Jobs\FetchArticlesJob;
+use App\Models\Article;
 use App\Services\NewsFetcherService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -15,7 +16,7 @@ class FetchArticlesJobTest extends TestCase
 
     public function test_it_dispatches_job()
     {
-        $job = new FetchArticlesJob();
+        $job = new FetchArticlesJob(Article::SOURCE_NEWS_API);
         $job->handle();
         // Assert that the job was handled successfully
         $this->assertTrue(true);
@@ -41,7 +42,7 @@ class FetchArticlesJobTest extends TestCase
         ]);
 
         // Dispatch job
-        dispatch(new FetchArticlesJob());
+        dispatch(new FetchArticlesJob(Article::SOURCE_NEWS_API));
 
         $this->assertDatabaseHas('articles', [
             'title' => 'Test Article',
