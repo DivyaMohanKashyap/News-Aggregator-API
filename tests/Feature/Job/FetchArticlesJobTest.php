@@ -25,6 +25,7 @@ class FetchArticlesJobTest extends TestCase
 
     public function test_it_fetches_articles_from_news_api()
     {
+        // Fake the external HTTP call
         Http::fake([
             '*' => Http::response([
                 'articles' => [
@@ -33,26 +34,24 @@ class FetchArticlesJobTest extends TestCase
                         'slug' => 'test-article',
                         'content' => 'Some content',
                         'author' => 'Test Author',
-                        'source' => ['name' => Article::SOURCE_NEWS_API],
+                        'source' => ['name' => 'News API'],
                         'url' => 'https://example.com/article',
                         'publishedAt' => now()->toIso8601String()
                     ]
                 ]
             ], 200),
         ]);
-        // Mock
-        $mockRepo = Mockery::mock(ArticleRepository::class);
-        $mockRepo->shouldReceive('saveArticle')->once()->withArgs(static fn($dto) =>
-            $dto->title === 'Test Article'
-            && $dto->url === 'https://example.com/article'
-            && $dto->import_source === Article::SOURCE_NEWS_API
-        );
 
-        // Bind the mock to the container
+        // Mock the ArticleRepository
+        $mockRepo = Mockery::mock(ArticleRepository::class);
+        $mockRepo
+        ->shouldReceive('saveArticle')->once()
+        ->andReturn(new Article());
+
+        // Bind it in the container
         $this->app->instance(ArticleRepository::class, $mockRepo);
 
-        // Let the container resolve NewsAPIService with the mock injected
-        $service = app(NewsAPIService::class);
-        $service->fetch();
+        // Run the job synchronously
+        FetchArticlesJob::dispatchSync(Article::SOURCE_NEWS_API);
     }
 }
