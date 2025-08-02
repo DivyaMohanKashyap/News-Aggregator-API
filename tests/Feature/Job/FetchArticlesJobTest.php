@@ -4,9 +4,7 @@ namespace Tests\Feature\Job;
 
 use App\Jobs\FetchArticlesJob;
 use App\Models\Article;
-use App\Services\NewsFetcherService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -33,9 +31,10 @@ class FetchArticlesJobTest extends TestCase
                         'slug' => 'test-article',
                         'content' => 'Some content',
                         'author' => 'Test Author',
-                        'source' => ['name' => 'News API'],
+                        'source' => ['name' => Article::SOURCE_NEWS_API],
+                        'import_source' => Article::SOURCE_NEWS_API,
                         'url' => 'https://example.com/article',
-                        'publishedAt' => now()->toIso8601String(),
+                        'publishedAt' => now()->toIso8601String()
                     ]
                 ]
             ], 200),
@@ -46,7 +45,8 @@ class FetchArticlesJobTest extends TestCase
 
         $this->assertDatabaseHas('articles', [
             'title' => 'Test Article',
-            'url'   => 'https://example.com/article',
+            'slug' => 'test-article',
+            'import_source' => Article::SOURCE_NEWS_API
         ]);
     }
 }
