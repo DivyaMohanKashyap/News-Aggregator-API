@@ -81,26 +81,18 @@ jobs:
             $IMAGE_NAME:$IMAGE_TAG \
             composer install --no-interaction --prefer-dist --optimize-autoloader
 
-      - name: Run migrations & tests
+      - name: Wait for MySQL to be ready
         run: |
-          docker run --rm \
-            --network host \
-            -v ${{ github.workspace }}:/var/www \
-            -w /var/www \
-            -e APP_ENV=testing \
-            -e APP_DEBUG=true \
-            -e LOG_CHANNEL=stack \
-            -e DB_CONNECTION=mysql \
-            -e DB_HOST=db \
-            -e DB_PORT=3306 \
-            -e DB_DATABASE=testing_db \
-            -e DB_USERNAME=root \
-            -e DB_PASSWORD=secret \
-            -e CACHE_DRIVER=redis \
-            -e QUEUE_CONNECTION=sync \
-            -e REDIS_HOST=redis \
-            $IMAGE_NAME:$IMAGE_TAG \
-            sh -c "php artisan migrate --force && php artisan test --log-junit test-report.xml"
+          until docker compose exec -T db mysql -uroot -psecret -e "SELECT 1"; do
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+
+      - name: Start Docker Compose
+        run: docker compose -f docker-compose.yml up -d --wait
+
+      - name: Run Laravel Tests via Docker Compose
+        run: docker compose exec -T app php artisan migrate:fresh --seed && docker compose exec -T app php artisan test
 
       - name: Upload Test Report
         if: always()
