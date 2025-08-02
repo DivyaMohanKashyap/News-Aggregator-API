@@ -32,12 +32,6 @@ jobs:
       - name: Build Docker image for Laravel app
         run: docker build -t news-api-app .
 
-      - name: Run Docker Compose
-        run: |
-          docker compose up -d db redis
-          docker compose up -d app
-          sleep 20 # Give containers time to initialize
-
       - name: Create .env.testing file
         run: |
           cat <<EOF > .env.testing
@@ -67,6 +61,12 @@ jobs:
           REDIS_PASSWORD=null
           REDIS_PORT=6379
           EOF
+
+      - name: Run Docker Compose
+        run: |
+          docker compose up -d db redis
+          docker compose up -d app
+          sleep 20 # Give containers time to initialize
 
       - name: Copy .env.testing to .env
         run: cp .env.testing .env
