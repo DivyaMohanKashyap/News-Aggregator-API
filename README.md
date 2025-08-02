@@ -1,4 +1,4 @@
-# News Aggregator API (Laravel + Docker + Swagger)
+# News Aggregator API (Laravel + Docker + Swagger + Redis + PHPUnit)
 
 
 ## Project Setup Documentation
@@ -8,12 +8,9 @@ This guide helps you run the Laravel project with Docker and Docker Compose effi
 ## Prerequisites
 
 * [Docker](https://www.docker.com/products/docker-desktop/) installed
-* [Docker Compose](https://docs.docker.com/compose/install/) installed
 * .env file set up (see .env.example)
 
-# Project Structure (Simplified)
-
-## Project Structure
+## Project Structure (Simplified)
 
 ```bash
 ├── app/
