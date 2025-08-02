@@ -41,6 +41,12 @@ jobs:
 
           sleep 20 # Allow services to initialize
 
+      - name: Install Composer Dependencies
+        run: composer install --no-interaction --prefer-dist --no-scripts
+
+      - name: Copy vendor into container
+        run: docker cp vendor news-api-app:/var/www
+
       - name: Run Laravel Tests in Prebuilt Container
         run: |
           docker run --rm \
