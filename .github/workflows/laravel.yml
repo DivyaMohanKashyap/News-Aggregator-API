@@ -1,46 +1,46 @@
-name: Laravel CI
+name: Laravel Docker CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
   pull_request:
+    branches: [ "main" ]
 
 jobs:
-  test:
+  laravel-tests:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.TOKEN_GITHUB }}
 
-      - name: Pull Prebuilt Laravel App Image
-        run: docker pull ghcr.io/divyamohankashyap/news-api-app:latest
+    - name: Pull Laravel App Image
+      run: docker pull ghcr.io/divyamohankashyap/news-api-app:latest
 
-      - name: Set up Docker Compose
-        run: |
-          cp .env.testing .env
-          docker compose -f docker compose.yml up -d
+    - name: Start services using docker-compose
+      run: |
+        cp .env.testing .env
+        docker compose -f docker-compose.yml up -d
 
-      - name: Wait for Services
-        run: sleep 15
+    - name: Run PHPUnit tests
+      run: |
+        docker exec news-api-app php artisan config:cache
+        docker exec news-api-app php artisan migrate --force
+        docker exec news-api-app php artisan test --log-junit test-report.xml
 
-      - name: Run Laravel Tests
-        run: docker exec news-api-app php artisan test --log-junit test-report.xml
+    - name: Save test report
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-report
+        path: test-report.xml
 
-      - name: Upload Test Results
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-report
-          path: ./test-report.xml
-
-      - name: Shut Down Docker
-        if: always()
-        run: docker compose -f docker compose.yml down -v
+    - name: Stop services
+      if: always()
+      run: docker compose -f docker-compose.yml down --volumes --remove-orphans
