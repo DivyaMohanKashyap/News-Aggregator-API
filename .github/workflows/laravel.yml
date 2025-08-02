@@ -1,92 +1,57 @@
-name: Laravel CI with Docker Compose
+name: Laravel CI
 
 on:
   push:
-    branches: [ "main", "staging" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main", "staging" ]
+    branches: [ "main" ]
 
 jobs:
-  build-docker-image:
-    name: Build & Cache Laravel Docker Image
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
-
-      - name: Build Docker image from docker-compose
-        run: docker compose build
-
-      - name: Tag the built app image
-        run: |
-          IMAGE_ID=$(docker images --format "{{.ID}} {{.Repository}}" | grep news-api-app | awk '{print $1}')
-          docker tag $IMAGE_ID news-api-app:latest
-
-      - name: Save Docker image to tarball
-        run: docker save news-api-app -o news-api-app.tar
-
-      - name: Upload Docker image as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: laravel-docker-image
-          path: news-api-app.tar
-
   laravel-tests:
-    name: Run Laravel Tests with Coverage
     runs-on: ubuntu-latest
-    needs: build-docker-image
-
     services:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          MYSQL_DATABASE: ${{ secrets.DB_DATABASE }}
+          MYSQL_DATABASE: news
+          MYSQL_ROOT_PASSWORD: root
         ports:
           - 3306:3306
         options: >-
           --health-cmd="mysqladmin ping --silent"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=3
+          --health-retries=5
 
-      redis:
-        image: redis:alpine
-        ports:
-          - 6379:6379
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: news
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      APP_ENV: testing
 
     steps:
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Download Docker image artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: laravel-docker-image
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
 
-      - name: Load Docker image
-        run: docker load -i news-api-app.tar
+      - name: Build Docker image for Laravel app
+        run: docker build -t news-api-app .
 
-      - name: Start Docker Compose services
-        run: docker compose up -d
-
-      - name: Wait for services to be ready
-        run: sleep 20
-
-      - name: Run Laravel tests with coverage
+      - name: Run Docker Compose
         run: |
-          docker exec news-api-app mkdir -p storage/test-results
-          docker exec news-api-app ./vendor/bin/phpunit --coverage-clover storage/test-results/coverage.xml > storage/test-results/results.log
+          docker-compose up -d db redis
+          docker-compose up -d app
+          sleep 20 # Give containers time to initialize
 
-      - name: Upload PHPUnit coverage report
+      - name: Run Artisan Tests
+        run: docker exec news-api-app php artisan test --log-junit test-report.xml
+
+      - name: Store Test Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: phpunit-coverage
-          path: storage/test-results/coverage.xml
-
-      - name: Upload PHPUnit logs
-        uses: actions/upload-artifact@v4
-        with:
-          name: phpunit-logs
-          path: storage/test-results/results.log
+          name: laravel-test-report
+          path: test-report.xml

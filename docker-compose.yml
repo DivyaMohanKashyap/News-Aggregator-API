@@ -15,10 +15,10 @@ services:
       - redis
     networks:
       - newsnet
-    command: >
-        sh -c "chmod -R 775 /var/www/storage &&
-                chown -R www-data:www-data /var/www/storage &&
-                php artisan migrate:fresh --seed &&
+    command: |
+        sh -c "chmod -R 775 /var/www/storage && \
+                chown -R www-data:www-data /var/www/storage && \
+                sleep 10 && php artisan migrate:fresh --seed && \
                 php-fpm"
 
   webserver:
