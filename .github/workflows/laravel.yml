@@ -13,22 +13,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up .env.testing
-        run: |
-          cat <<EOF > .env.testing
-          APP_ENV=testing
-          APP_DEBUG=true
-          LOG_CHANNEL=stack
-          DB_CONNECTION=mysql
-          DB_HOST=db
-          DB_PORT=3306
-          DB_DATABASE=testing_db
-          DB_USERNAME=root
-          DB_PASSWORD=secret
-          CACHE_DRIVER=redis
-          QUEUE_CONNECTION=sync
-          REDIS_HOST=redis
-          EOF
+      - name: Copying .env.testing to .env
+        run: cp .env.testing .env
 
       - name: Build and start containers
         run: docker compose -f docker-compose.yml up -d --build
