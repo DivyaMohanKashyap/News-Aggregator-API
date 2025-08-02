@@ -31,7 +31,7 @@ jobs:
           EOF
 
       - name: Build and start containers
-        run: docker-compose -f docker-compose.yml up -d --build
+        run: docker compose -f docker-compose.yml up -d --build
 
       - name: Wait for MySQL to be ready
         run: |
@@ -65,4 +65,4 @@ jobs:
 
       - name: Shutdown containers
         if: always()
-        run: docker-compose -f docker-compose.yml down -v
+        run: docker compose -f docker-compose.yml down -v
