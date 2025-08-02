@@ -72,7 +72,10 @@ jobs:
           sleep 20 # Give containers time to initialize
 
       - name: Install Composer Dependencies
-        run: docker exec news-api-app composer install --no-interaction --prefer-dist --no-scripts
+        run: composer install --no-interaction --prefer-dist --no-scripts
+
+      - name: Copy vendor into container
+        run: docker cp vendor news-api-app:/var/www
 
       - name: Run Laravel Tests
         run: docker exec news-api-app php artisan test --log-junit test-report.xml
