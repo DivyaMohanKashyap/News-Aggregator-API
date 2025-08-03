@@ -17,7 +17,7 @@ jobs:
         image: mysql:8.0
         env:
           MYSQL_DATABASE: news
-          MYSQL_ROOT_PASSWORD: ''
+          MYSQL_ROOT_PASSWORD: ""
           MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
         ports:
           - 3306:3306
@@ -26,13 +26,17 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+
       docker:
         image: docker:24.0.6
-        options: '--privileged'
+        options: --privileged
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Docker Compose
+        run: docker compose -f docker-compose.yml up -d --build
 
       - name: Copy .env.testing into container
         run: docker cp .env.testing news-api-app:/var/www/.env
@@ -41,11 +45,8 @@ jobs:
         run: |
           for i in {1..60}; do
             docker exec news-api-db mysqladmin ping -uroot --password= && break
-            sleep 20
+            sleep 2
           done
-
-      - name: Set up Docker Compose
-        run: docker compose -f docker-compose.yml up -d --build
 
       - name: Clear Laravel cache
         run: docker exec news-api-app php artisan optimize:clear
