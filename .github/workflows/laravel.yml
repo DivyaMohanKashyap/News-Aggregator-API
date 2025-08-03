@@ -34,21 +34,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Docker Compose
-        run: docker compose -f docker-compose.yml up -d --build
+      - name: Copy .env.testing into container
+        run: docker cp .env.testing news-api-app:/var/www/.env
 
       - name: Wait for MySQL
         run: |
           for i in {1..60}; do
             docker exec news-api-db mysqladmin ping -uroot --password= && break
-            sleep 2
+            sleep 20
           done
 
-      - name: Copy .env.testing into container
-        run: docker cp .env.testing news-api-app:/var/www/.env
-
-      - name: Wait for DB to be ready
-        run: sleep 20
+      - name: Set up Docker Compose
+        run: docker compose -f docker-compose.yml up -d --build
 
       - name: Clear Laravel cache
         run: docker exec news-api-app php artisan optimize:clear
