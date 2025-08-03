@@ -10,33 +10,11 @@ jobs:
   laravel-tests:
     runs-on: ubuntu-latest
 
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_DATABASE: news
-          MYSQL_ROOT_PASSWORD: root
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping --silent"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
-      redis:
-        image: redis:alpine
-        ports:
-          - 6379:6379
-
     steps:
       - uses: actions/checkout@v4
 
-      - name: Authenticate with GitHub Container Registry (GHCR)
+      - name: Authenticate with GHCR
         run: echo "${{ secrets.TOKEN_GITHUB }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Pull prebuilt Laravel image
-        run: docker pull ghcr.io/divyamohankashyap/news-api-app:latest
 
       - name: Create .env.testing file
         run: |
@@ -68,28 +46,23 @@ jobs:
           REDIS_PORT=6379
           EOF
 
-      - name: Start Laravel container (keep it alive)
+      - name: Copy .env.testing to .env
+        run: cp .env.testing .env
+
+      - name: Override image in docker-compose
         run: |
-          docker run -d --name news-api-app \
-            --env-file .env.testing \
-            --network bridge \
-            -v ${{ github.workspace }}:/var/www \
-            ghcr.io/divyamohankashyap/news-api-app:latest \
-            tail -f /dev/null
+          sed -i 's|build:.*|image: ghcr.io/divyamohankashyap/news-api-app:latest|' docker/docker-compose.yml
 
-      - name: Wait for container boot
-        run: sleep 15
-
-      - name: Install Composer Dependencies
-        run: docker exec news-api-app composer install --no-interaction --prefer-dist --no-scripts
+      - name: Start Laravel + MySQL + Redis
+        run: docker compose -f docker/docker-compose.yml up -d --wait
 
       - name: Run Laravel Migrations
-        run: docker exec news-api-app php artisan migrate --force
+        run: docker compose -f docker/docker-compose.yml exec app php artisan migrate --force
 
       - name: Run Laravel Tests
-        run: docker exec news-api-app php artisan test --log-junit test-report.xml
+        run: docker compose -f docker/docker-compose.yml exec app php artisan test --log-junit test-report.xml
 
-      - name: Store Test Artifacts
+      - name: Upload Test Report
         uses: actions/upload-artifact@v4
         with:
           name: laravel-test-report
