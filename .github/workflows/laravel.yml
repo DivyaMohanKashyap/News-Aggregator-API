@@ -1,54 +1,95 @@
-name: Run Laravel Tests
+name: Laravel CI
 
 on:
   push:
-    branches: [main]
+    branches: [ "main" ]
   pull_request:
+    branches: [ "main" ]
 
 jobs:
   laravel-tests:
     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: news
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
-      - name: Copying .env.testing to .env
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate with GitHub Container Registry (GHCR)
+        run: echo "${{ secrets.TOKEN_GITHUB }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Pull prebuilt Laravel image
+        run: docker pull ghcr.io/divyamohankashyap/news-api-app:latest
+
+      - name: Create .env.testing file
+        run: |
+          cat <<EOF > .env.testing
+          APP_NAME=Laravel
+          APP_ENV=testing
+          APP_KEY=${{ secrets.APP_KEY }}
+          APP_DEBUG=true
+          APP_URL=http://localhost
+
+          LOG_CHANNEL=stack
+          LOG_LEVEL=debug
+
+          DB_CONNECTION=mysql
+          DB_HOST=127.0.0.1
+          DB_PORT=3306
+          DB_DATABASE=${{ secrets.DB_DATABASE }}
+          DB_USERNAME=${{ secrets.DB_USERNAME }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+
+          BROADCAST_DRIVER=log
+          CACHE_DRIVER=file
+          QUEUE_CONNECTION=sync
+          SESSION_DRIVER=file
+          SESSION_LIFETIME=120
+
+          REDIS_HOST=127.0.0.1
+          REDIS_PASSWORD=null
+          REDIS_PORT=6379
+          EOF
+
+      - name: Copy .env.testing to .env
         run: cp .env.testing .env
 
-      - name: Build and start containers
-        run: docker compose -f docker-compose.yml up -d --build
-
-      - name: Wait for MySQL to be ready
+      - name: Start Laravel container from prebuilt image
         run: |
-          echo "Waiting for MySQL to be ready..."
-          for i in {1..30}; do
-            if docker exec news-api-db mysql -uroot -psecret -e "SHOW DATABASES;" > /dev/null 2>&1; then
-              echo "MySQL is ready!"
-              break
-            fi
-            echo "Waiting ($i)..."
-            sleep 2
-          done
+          docker run -d --name news-api-app \
+            --network host \
+            -v ${{ github.workspace }}:/var/www \
+            ghcr.io/divyamohankashyap/news-api-app:latest \
+            sh -c "sleep 10 && php artisan migrate --force && php-fpm"
 
-      - name: Run Laravel tests with coverage
-        run: |
-          docker exec news-api-app php artisan config:clear
-          docker exec news-api-app php artisan migrate:fresh --seed
-          docker exec news-api-app php artisan test --log-junit /var/www/test-report.xml --coverage-clover=/var/www/coverage.xml
+      - name: Install Composer Dependencies
+        run: composer install --no-interaction --prefer-dist --no-scripts
 
-      - name: Upload test report
+      - name: Copy vendor into container
+        run: docker cp vendor news-api-app:/var/www
+
+      - name: Run Laravel Tests
+        run: docker exec news-api-app php artisan test --log-junit test-report.xml
+
+      - name: Store Test Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: test-report
+          name: laravel-test-report
           path: test-report.xml
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage.xml
-
-      - name: Shutdown containers
-        if: always()
-        run: docker compose -f docker-compose.yml down -v
