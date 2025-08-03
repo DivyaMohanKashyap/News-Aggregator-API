@@ -31,27 +31,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # - name: Log in to GitHub Container Registry
-      #   uses: docker/login-action@v3
-      #   with:
-      #     registry: ghcr.io
-      #     username: ${{ github.actor }}
-      #     password: ${{ secrets.TOKEN_GITHUB }}
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.TOKEN_GITHUB }}
 
-      # - name: Pull Laravel App Image
-      #   run: docker pull ghcr.io/divyamohankashyap/news-api-app:latest
+      - name: Pull Laravel App Image
+        run: docker pull ghcr.io/divyamohankashyap/news-api-app:latest
 
-      # - name: Start Laravel App Container
-      #   run: |
-      #     docker run -d --name news-api-app \
-      #       -v ${{ github.workspace }}:/var/www \
-      #       -w /var/www \
-      #       ghcr.io/divyamohankashyap/news-api-app:latest \
-      #       sleep infinity
-
-
-      - name: Set up Docker Compose
-        run: docker compose --env-file .env.testing up -d --build
+      - name: Start Laravel App Container
+        run: |
+          docker run -d --name news-api-app \
+            -v ${{ github.workspace }}:/var/www \
+            -w /var/www \
+            ghcr.io/divyamohankashyap/news-api-app:latest \
+            sleep infinity
 
       - name: Copy .env.testing into container
         run: docker cp .env.testing $(docker ps -qf "name=app"):/var/www/.env
