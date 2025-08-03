@@ -56,20 +56,23 @@ jobs:
       - name: Copy .env.testing into container
         run: docker cp .env.testing news-api-app:/var/www/.env
 
+      - name: Check MySQL Connection from Laravel Container
+        run: |
+          docker exec news-api-app sh -c \
+          'apt update && apt install -y mysql-client && mysql -h db -u root -proot -e "SHOW DATABASES;"'
+
       - name: Wait for MySQL
         run: sleep 20
 
       - name: Composer install
         run: docker exec news-api-app composer install --no-interaction --prefer-dist --no-scripts
 
-      - name: Clear Laravel cache
+      - name: Clear Laravel caches
         run: |
-          docker exec news-api-app php artisan optimize:clear \
-          && docker exec news-api-app php artisan config:clear \
-          && docker exec news-api-app php artisan route:clear \
-          && docker exec news-api-app php artisan view:clear \
-          && docker exec news-api-app php artisan cache:clear \
-
+          docker exec news-api-app php artisan config:clear
+          docker exec news-api-app php artisan route:clear
+          docker exec news-api-app php artisan view:clear
+          docker exec news-api-app php artisan cache:clear
 
       - name: Run migrations
         run: docker exec news-api-app php artisan migrate --force
