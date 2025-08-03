@@ -78,8 +78,15 @@ jobs:
 
       - name: Clear Laravel caches
         run: |
-          docker exec news-api-app php artisan config:clear
-          docker exec news-api-app php artisan optimize:clear
+          echo "Clearing all caches..."
+          docker exec news-api-app php artisan config:clear || true
+          docker exec news-api-app php artisan cache:clear || true
+          docker exec news-api-app php artisan route:clear || true
+          docker exec news-api-app php artisan view:clear || true
+          docker exec news-api-app php artisan optimize:clear || true
+
+          echo "Dumping fresh config to make sure Redis is used..."
+          docker exec news-api-app php artisan config:cache
 
       - name: Run migrations
         run: docker exec news-api-app php artisan migrate --force
