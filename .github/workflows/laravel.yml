@@ -30,6 +30,14 @@ jobs:
             mysql:8.0 \
             --default-authentication-plugin=mysql_native_password
 
+      - name: Start Redis container
+        run: |
+          docker run -d \
+            --name redis-container \
+            --network laravel-net \
+            -p 6379:6379 \
+            redis:alpine
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -71,6 +79,7 @@ jobs:
       - name: Clear Laravel caches
         run: |
           docker exec news-api-app php artisan config:clear
+          docker exec news-api-app php artisan cache:table
           docker exec news-api-app php artisan cache:clear
           docker exec news-api-app php artisan route:clear
           docker exec news-api-app php artisan view:clear
