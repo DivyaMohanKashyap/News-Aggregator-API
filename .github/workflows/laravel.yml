@@ -47,6 +47,7 @@ jobs:
             --network laravel-net \
             -v ${{ github.workspace }}:/var/www \
             -w /var/www \
+            -e XDEBUG_MODE=coverage \
             ghcr.io/divyamohankashyap/news-api-app:latest \
             sleep infinity
 
@@ -67,6 +68,9 @@ jobs:
 
       - name: Install Composer dependencies
         run: docker exec news-api-app composer install --no-interaction --prefer-dist --no-scripts
+
+      - name: Generate application key
+        run: docker exec news-api-app php artisan key:generate
 
       - name: Clear Laravel caches
         run: |
