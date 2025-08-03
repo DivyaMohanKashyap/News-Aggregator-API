@@ -79,7 +79,6 @@ jobs:
       - name: Clear Laravel caches
         run: |
           docker exec news-api-app php artisan config:clear
-          docker exec news-api-app php artisan cache:clear
           docker exec news-api-app php artisan optimize:clear
 
       - name: Run migrations
