@@ -60,7 +60,7 @@ jobs:
       - name: Wait for MySQL
         run: |
           for i in {1..60}; do
-            docker exec news-api-db mysqladmin ping -uroot --password= && break
+            docker exec db mysqladmin ping -uroot --password= && break
             sleep 2
           done
 
