@@ -20,7 +20,7 @@ jobs:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_ALLOW_EMPTY_PASSWORD: "no"
         ports:
-          - 3307:3306  # Host port 3307 mapped to container's 3306
+          - 3306:3306  # Host port 3306 mapped to container's 3306
         options: >-
           --health-cmd="mysqladmin ping --silent"
           --health-interval=10s
@@ -44,6 +44,7 @@ jobs:
       - name: Start Laravel App Container
         run: |
           docker run -d --name news-api-app \
+            --network host \
             -v ${{ github.workspace }}:/var/www \
             -w /var/www \
             ghcr.io/divyamohankashyap/news-api-app:latest \
@@ -52,15 +53,15 @@ jobs:
       - name: Copy .env.testing into container
         run: docker cp .env.testing news-api-app:/var/www/.env
 
-      - name: Wait for MySQL to be ready (port 3307)
+      - name: Wait for MySQL to be ready (port 3306)
         run: |
-          for i in {1..30}; do
+          for i in {1..10}; do
             if docker run --rm --network container:news-api-app mysql:8.0 \
-              mysql -h db -P 3307 -u root -proot -e "SELECT 1;" > /dev/null 2>&1; then
-              echo "✅ MySQL is ready on port 3307"
+              mysql -h db -P 3306 -u root -proot -e "SELECT 1;" > /dev/null 2>&1; then
+              echo "✅ MySQL is ready on port 3306"
               break
             fi
-            echo "⏳ Waiting for MySQL on port 3307 ($i)..."
+            echo "⏳ Waiting for MySQL on port 3306 ($i)..."
             sleep 2
           done
 
