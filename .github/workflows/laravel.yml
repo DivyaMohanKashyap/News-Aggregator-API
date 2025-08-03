@@ -57,11 +57,6 @@ jobs:
       - name: Copy .env.testing into container
         run: docker cp .env.testing news-api-app:/var/www/.env
 
-      - name: Check MySQL Connection from Laravel Container
-        run: |
-          docker exec news-api-app sh -c \
-          'apt update && apt install -y mysql-client && mysql -h db -u root -proot -e "SHOW DATABASES;"'
-
       - name: Wait for MySQL
         run: sleep 20
 
