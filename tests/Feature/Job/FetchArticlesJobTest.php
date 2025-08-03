@@ -25,6 +25,8 @@ class FetchArticlesJobTest extends TestCase
 
     public function test_it_fetches_articles_from_news_api()
     {
+        config(['services.newsapi.key' => 'fake-test-key']);
+
         // Fake the external HTTP call
         Http::fake([
             '*' => Http::response([
@@ -44,7 +46,8 @@ class FetchArticlesJobTest extends TestCase
 
         // Mock the ArticleRepository
         $mockRepo = Mockery::mock(ArticleRepository::class);
-        $mockRepo->shouldReceive('saveArticle')->once()->andReturn(new Article());
+        $mockRepo->shouldReceive('saveArticle')->once()->andReturn(new Article);
+
         $this->app->instance(ArticleRepository::class, $mockRepo);
 
         // Run the job synchronously
