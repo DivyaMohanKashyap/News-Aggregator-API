@@ -64,11 +64,17 @@ jobs:
             sleep 2
           done
 
-      - name: Clear Laravel cache
-        run: docker exec news-api-app php artisan optimize:clear
-
       - name: Composer install
         run: docker exec news-api-app composer install --no-interaction --prefer-dist --no-scripts
+
+      - name: Clear Laravel cache
+        run: |
+          docker exec news-api-app php artisan optimize:clear \
+          && docker exec news-api-app php artisan config:clear \
+          && docker exec news-api-app php artisan route:clear \
+          && docker exec news-api-app php artisan view:clear \
+          && docker exec news-api-app php artisan cache:clear \
+
 
       - name: Run migrations
         run: docker exec news-api-app php artisan migrate --force
