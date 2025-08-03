@@ -30,4 +30,15 @@
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
     </php>
+
+
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory>./app</directory>
+        </include>
+    </coverage>
+
+    <logging>
+        <log type="coverage-clover" target="coverage.xml" />
+    </logging>
 </phpunit>
