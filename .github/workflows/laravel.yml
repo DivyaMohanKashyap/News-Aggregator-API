@@ -2,75 +2,54 @@ name: Laravel CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
-  laravel-tests:
+  test:
     runs-on: ubuntu-latest
-
     services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_DATABASE: news
-          MYSQL_ROOT_PASSWORD: root
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping --silent"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
-      redis:
-        image: redis:alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+      docker:
+        image: docker:24.0.6
+        options: '--privileged'
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.TOKEN_GITHUB }}
+      - name: Set up Docker Compose
+        run: docker compose -f docker-compose.yml up -d --build
 
-      - name: Pull Laravel App Image
-        run: docker pull ghcr.io/divyamohankashyap/news-api-app:latest
-
-      - name: Start Laravel App Container with volume mount
+      - name: Wait for MySQL
         run: |
-          docker run -d --name news-api-app \
-            --network host \
-            -v ${{ github.workspace }}:/var/www \
-            -w /var/www \
-            ghcr.io/divyamohankashyap/news-api-app:latest \
-            sleep infinity
+          for i in {1..60}; do
+            docker exec news-api-db mysqladmin ping -uroot --password=${{ secrets.MYSQL_ROOT_PASSWORD }} && break
+            sleep 2
+          done
 
-      - name: Copy .env.testing to .env
-        run: cp .env.testing .env
+      - name: Copy .env.testing into container
+        run: docker cp .env.testing news-api-app:/var/www/.env
 
       - name: Wait for DB to be ready
         run: sleep 20
 
-      - name: Install Composer Dependencies (inside container)
+      - name: Clear Laravel cache
+        run: docker exec news-api-app php artisan optimize:clear
+
+      - name: Composer install
         run: docker exec news-api-app composer install --no-interaction --prefer-dist --no-scripts
 
-      - name: Run Laravel Tests
-        run: docker exec news-api-app php artisan test --log-junit test-report.xml
+      - name: Run migrations
+        run: docker exec news-api-app php artisan migrate --force
 
-      - name: Store Test Artifacts
+      - name: Run PHPUnit tests with coverage
+        run: docker exec news-api-app php artisan test --env=testing --coverage-clover=coverage.xml
+
+      - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
         with:
-          name: laravel-test-report
-          path: test-report.xml
+          name: coverage-report
+          path: coverage.xml
