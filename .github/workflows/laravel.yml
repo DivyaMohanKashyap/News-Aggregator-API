@@ -47,7 +47,6 @@ jobs:
             --network laravel-net \
             -v ${{ github.workspace }}:/var/www \
             -w /var/www \
-            -e XDEBUG_MODE=coverage \
             ghcr.io/divyamohankashyap/news-api-app:latest \
             sleep infinity
 
@@ -87,5 +86,5 @@ jobs:
       - name: Run migrations
         run: docker exec news-api-app php artisan migrate --force
 
-      - name: Run PHPUnit tests with coverage
+      - name: Run PHPUnit tests (no coverage)
         run: docker exec news-api-app php artisan test --env=testing
