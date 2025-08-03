@@ -55,7 +55,7 @@ jobs:
             sleep infinity
 
       - name: Copy .env.testing into container
-        run: docker cp .env.testing
+        run: docker cp .env.testing .env
 
       - name: Wait for MySQL
         run: sleep 20
