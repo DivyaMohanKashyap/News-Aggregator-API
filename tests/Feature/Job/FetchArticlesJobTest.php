@@ -44,11 +44,7 @@ class FetchArticlesJobTest extends TestCase
 
         // Mock the ArticleRepository
         $mockRepo = Mockery::mock(ArticleRepository::class);
-        $mockRepo
-        ->shouldReceive('saveArticle')->once()
-        ->andReturn(new Article());
-
-        // Bind it in the container
+        $mockRepo->shouldReceive('saveArticle')->once()->andReturn(new Article());
         $this->app->instance(ArticleRepository::class, $mockRepo);
 
         // Run the job synchronously
