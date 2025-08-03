@@ -81,12 +81,8 @@ jobs:
           docker exec news-api-app php artisan config:clear
           docker exec news-api-app php artisan cache:table
           docker exec news-api-app php artisan cache:clear
-          docker exec news-api-app php artisan route:clear
-          docker exec news-api-app php artisan view:clear
           docker exec news-api-app php artisan optimize:clear
 
-      - name: Run migrations
-        run: docker exec news-api-app php artisan migrate --force
 
       - name: Run PHPUnit tests with coverage
         run: docker exec news-api-app php artisan test --env=testing --coverage-clover=coverage.xml
