@@ -15,7 +15,6 @@ jobs:
     services:
       db:
         image: mysql:8.0
-        container_name: db
         env:
           MYSQL_DATABASE: news
           MYSQL_ROOT_PASSWORD: root
