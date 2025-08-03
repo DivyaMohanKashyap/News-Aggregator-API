@@ -13,23 +13,19 @@ jobs:
     runs-on: ubuntu-latest
 
     services:
-      mysql:
+      db:
         image: mysql:8.0
         env:
           MYSQL_DATABASE: news
           MYSQL_ROOT_PASSWORD: root
           MYSQL_ALLOW_EMPTY_PASSWORD: "no"
         ports:
-          - 3307:3306
+          - 3307:3306  # Host port 3307 mapped to container's 3306
         options: >-
           --health-cmd="mysqladmin ping --silent"
           --health-interval=10s
           --health-timeout=5s
-          --health-retries=5
-
-      docker:
-        image: docker:24.0.6
-        options: --privileged
+          --health-retries=10
 
     steps:
       - name: Checkout repository
@@ -56,16 +52,15 @@ jobs:
       - name: Copy .env.testing into container
         run: docker cp .env.testing news-api-app:/var/www/.env
 
-
-      - name: Wait for MySQL to be ready
+      - name: Wait for MySQL to be ready (port 3307)
         run: |
           for i in {1..30}; do
             if docker run --rm --network container:news-api-app mysql:8.0 \
-              mysql -h db -u root -proot -e "SELECT 1;" > /dev/null 2>&1; then
-              echo "✅ MySQL is ready"
+              mysql -h db -P 3307 -u root -proot -e "SELECT 1;" > /dev/null 2>&1; then
+              echo "✅ MySQL is ready on port 3307"
               break
             fi
-            echo "⏳ Waiting for MySQL ($i)..."
+            echo "⏳ Waiting for MySQL on port 3307 ($i)..."
             sleep 2
           done
 
@@ -74,6 +69,7 @@ jobs:
 
       - name: Clear Laravel caches
         run: |
+          docker exec news-api-app php artisan optimize:clear
           docker exec news-api-app php artisan config:clear
           docker exec news-api-app php artisan route:clear
           docker exec news-api-app php artisan view:clear
