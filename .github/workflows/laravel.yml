@@ -55,14 +55,10 @@ jobs:
             sleep infinity
 
       - name: Copy .env.testing into container
-        run: docker cp .env.testing news-api-app:/var/www/.env
+        run: docker cp .env.testing
 
       - name: Wait for MySQL
-        run: |
-          for i in {1..60}; do
-            docker exec db mysqladmin ping -uroot --password= && break
-            sleep 2
-          done
+        run: sleep 20
 
       - name: Composer install
         run: docker exec news-api-app composer install --no-interaction --prefer-dist --no-scripts
