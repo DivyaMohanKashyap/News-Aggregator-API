@@ -66,9 +66,6 @@ jobs:
       - name: Install Composer Dependencies (inside container)
         run: docker exec news-api-app composer install --no-interaction --prefer-dist --no-scripts
 
-      - name: Run Migrations (inside container)
-        run: docker exec news-api-app php artisan migrate --force
-
       - name: Run Laravel Tests
         run: docker exec news-api-app php artisan test --log-junit test-report.xml
 
