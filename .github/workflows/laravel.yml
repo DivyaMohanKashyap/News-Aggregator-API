@@ -88,4 +88,10 @@ jobs:
         run: docker exec news-api-app php artisan migrate --force
 
       - name: Run PHPUnit tests with coverage
-        run: docker exec news-api-app php artisan test --env=testing
+        run: docker exec news-api-app php artisan test --env=testing --coverage-clover=coverage.xml
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
