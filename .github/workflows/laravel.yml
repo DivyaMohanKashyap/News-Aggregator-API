@@ -48,7 +48,6 @@ jobs:
       - name: Start Laravel App Container with volume mount
         run: |
           docker run -d --name news-api-app \
-            --network host \
             -v ${{ github.workspace }}:/var/www \
             -w /var/www \
             ghcr.io/divyamohankashyap/news-api-app:latest \
