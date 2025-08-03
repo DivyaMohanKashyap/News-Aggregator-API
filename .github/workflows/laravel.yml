@@ -52,7 +52,7 @@ jobs:
 
 
       - name: Set up Docker Compose
-        run: docker-compose up -d --build
+        run: docker compose up -d --build
 
       - name: Copy .env.testing into container
         run: docker cp .env.testing news-api-app:/var/www/.env
