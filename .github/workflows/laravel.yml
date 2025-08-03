@@ -50,12 +50,11 @@ jobs:
       #       sleep infinity
 
 
-
       - name: Set up Docker Compose
-        run: docker compose up -d --build
+        run: docker compose --env-file .env.testing up -d --build
 
       - name: Copy .env.testing into container
-        run: docker cp .env.testing news-api-app:/var/www/.env
+        run: docker cp .env.testing $(docker ps -qf "name=app"):/var/www/.env
 
       - name: Wait for MySQL to be ready
         run: |
