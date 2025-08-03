@@ -51,7 +51,7 @@ jobs:
           LOG_LEVEL=debug
 
           DB_CONNECTION=mysql
-          DB_HOST=127.0.0.1
+          DB_HOST=mysql
           DB_PORT=3306
           DB_DATABASE=${{ secrets.DB_DATABASE }}
           DB_USERNAME=${{ secrets.DB_USERNAME }}
@@ -63,27 +63,28 @@ jobs:
           SESSION_DRIVER=file
           SESSION_LIFETIME=120
 
-          REDIS_HOST=127.0.0.1
+          REDIS_HOST=redis
           REDIS_PASSWORD=null
           REDIS_PORT=6379
           EOF
 
-      - name: Copy .env.testing to .env
-        run: cp .env.testing .env
-
-      - name: Start Laravel container from prebuilt image
+      - name: Start Laravel container (keep it alive)
         run: |
           docker run -d --name news-api-app \
-            --network host \
+            --env-file .env.testing \
+            --network bridge \
             -v ${{ github.workspace }}:/var/www \
             ghcr.io/divyamohankashyap/news-api-app:latest \
-            sh -c "sleep 10 && php artisan migrate --force && php-fpm"
+            tail -f /dev/null
+
+      - name: Wait for container boot
+        run: sleep 15
 
       - name: Install Composer Dependencies
-        run: composer install --no-interaction --prefer-dist --no-scripts
+        run: docker exec news-api-app composer install --no-interaction --prefer-dist --no-scripts
 
-      - name: Copy vendor into container
-        run: docker cp vendor news-api-app:/var/www
+      - name: Run Laravel Migrations
+        run: docker exec news-api-app php artisan migrate --force
 
       - name: Run Laravel Tests
         run: docker exec news-api-app php artisan test --log-junit test-report.xml
