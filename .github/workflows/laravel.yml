@@ -44,7 +44,6 @@ jobs:
       - name: Start Laravel App Container
         run: |
           docker run -d --name news-api-app \
-            --add-host=db:$(getent hosts host.docker.internal | awk '{ print $1 }' || echo 127.0.0.1) \
             -v ${{ github.workspace }}:/var/www \
             -w /var/www \
             ghcr.io/divyamohankashyap/news-api-app:latest \
