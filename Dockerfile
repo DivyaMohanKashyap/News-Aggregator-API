@@ -6,13 +6,20 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev libssl-dev mariadb-client
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl
+RUN docker-php-ext-install pdo pdo_mysql mbstring zip exif pcntl
+
+# Install Composer globally from the official Composer image
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /var/www
 
+# Copy entire app
+COPY . .
+
+EXPOSE 9000
+
 # Set permissions
 RUN chown -R www-data:www-data /var/www && chmod -R 755 /var/www
 
-EXPOSE 9000
 CMD ["php-fpm"]
